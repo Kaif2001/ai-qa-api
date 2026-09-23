@@ -1,5 +1,3 @@
-import os
-
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Form, HTTPException
 from google.genai import errors
@@ -39,9 +37,7 @@ class ChatRequest(BaseModel):
 def health_check():
     try:
         db = SessionLocal()
-
         db.execute(text("SELECT 1"))
-
         db.close()
 
         redis_client.ping()
@@ -94,20 +90,18 @@ def chat(
 
     rate_limit_key = f"chat_rate:{current_user}"
 
-    request_count = redis_client.get(rate_limit_key)
+    request_count = redis_client.incr(rate_limit_key)
 
-    if request_count is None:
-        redis_client.set(rate_limit_key, 1, ex=60)
-    elif int(request_count) >= 10:
+    if request_count == 1:
+        redis_client.expire(rate_limit_key, 60)
+
+    if request_count > 10:
         chat_errors.inc()
 
         raise HTTPException(
             status_code=429,
             detail="Rate limit exceeded. Try again later.",
         )
-
-    else:
-        redis_client.incr(rate_limit_key)
 
     try:
         answer = generate_answer(request.question)
