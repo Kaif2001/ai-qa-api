@@ -214,7 +214,7 @@ Unauthorized chat request
 PostgreSQL and Redis health check
 Prometheus metrics endpoint
 
-The current test suite passes all 5 tests.
+The current test suite passes all 6 tests.
 
 The real Gemini /chat endpoint should not be repeatedly called during testing because external LLM API quotas and rate limits apply.
 
@@ -384,7 +384,7 @@ Current Verification
 
 The project has been verified with:
 
-5/5 automated tests passing
+6/6 automated tests passing
 Docker API container running
 PostgreSQL connected
 Redis connected
