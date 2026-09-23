@@ -1,3 +1,5 @@
+import os
+
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Form, HTTPException
 from google.genai import errors
@@ -16,6 +18,9 @@ from app.redis_client import redis_client
 load_dotenv()
 
 app = FastAPI()
+
+DEMO_USERNAME = os.getenv("DEMO_USERNAME", "admin")
+DEMO_PASSWORD = os.getenv("DEMO_PASSWORD", "admin123")
 
 
 chat_requests = Counter(
@@ -66,7 +71,7 @@ def metrics():
 
 @app.post("/auth/login")
 def login(username: str = Form(...), password: str = Form(...)):
-    if username != "admin" or password != "admin123":
+    if username != DEMO_USERNAME or password != DEMO_PASSWORD:
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password",
