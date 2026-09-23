@@ -28,3 +28,5 @@ def generate_answer(question: str):
                 raise
 
             time.sleep(2 ** attempt)
+
+    raise RuntimeError("LLM request failed")
