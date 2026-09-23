@@ -137,6 +137,10 @@ Exposes Prometheus metrics including:
 
 chat_requests_total
 chat_errors_total
+chat_request_duration_seconds
+llm_input_tokens_total
+llm_output_tokens_total
+
 Environment Variables
 
 Create a .env file in the project root.
