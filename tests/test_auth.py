@@ -46,3 +46,17 @@ def test_chat_without_token():
     )
 
     assert response.status_code == 401
+
+
+def test_chat_with_invalid_token():
+    response = client.post(
+        "/chat",
+        headers={
+            "Authorization": "Bearer invalid-token"
+        },
+        json={
+            "question": "What is DevOps?"
+        },
+    )
+
+    assert response.status_code == 401
