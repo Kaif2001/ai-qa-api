@@ -1,3 +1,5 @@
+import os
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -5,13 +7,16 @@ from app.main import app
 
 client = TestClient(app)
 
+USERNAME = os.getenv("DEMO_USERNAME", "admin")
+PASSWORD = os.getenv("DEMO_PASSWORD", "admin123")
+
 
 def test_login_success():
     response = client.post(
         "/auth/login",
         data={
-            "username": "admin",
-            "password": "admin123",
+            "username": USERNAME,
+            "password": PASSWORD,
         },
     )
 
@@ -24,7 +29,7 @@ def test_login_wrong_password():
     response = client.post(
         "/auth/login",
         data={
-            "username": "admin",
+            "username": USERNAME,
             "password": "wrongpassword",
         },
     )
