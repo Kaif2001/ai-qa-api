@@ -5,11 +5,12 @@ from fastapi import Depends, FastAPI, Form, HTTPException
 from google.genai import errors
 from prometheus_client import Counter, generate_latest
 from pydantic import BaseModel, Field
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.responses import Response
 
 from app.auth import create_access_token, get_current_user
-from app.database import get_db
+from app.database import SessionLocal, get_db
 from app.llm_gateway import generate_answer
 from app.models import ChatHistory
 from app.redis_client import redis_client
@@ -36,7 +37,27 @@ class ChatRequest(BaseModel):
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    try:
+        db = SessionLocal()
+
+        db.execute(text("SELECT 1"))
+
+        db.close()
+
+        redis_client.ping()
+
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "redis": "connected",
+        }
+
+    except Exception:
+        return Response(
+            content='{"status":"unhealthy"}',
+            status_code=503,
+            media_type="application/json",
+        )
 
 
 @app.get("/metrics")
@@ -79,10 +100,12 @@ def chat(
         redis_client.set(rate_limit_key, 1, ex=60)
     elif int(request_count) >= 10:
         chat_errors.inc()
+
         raise HTTPException(
             status_code=429,
             detail="Rate limit exceeded. Try again later.",
         )
+
     else:
         redis_client.incr(rate_limit_key)
 
@@ -91,6 +114,7 @@ def chat(
 
     except errors.RateLimitError:
         chat_errors.inc()
+
         raise HTTPException(
             status_code=429,
             detail="LLM rate limit exceeded. Please try again later.",
@@ -98,6 +122,7 @@ def chat(
 
     except Exception:
         chat_errors.inc()
+
         raise HTTPException(
             status_code=503,
             detail="LLM service is temporarily unavailable.",
