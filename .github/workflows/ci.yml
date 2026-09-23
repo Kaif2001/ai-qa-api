@@ -56,7 +56,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_qa_api
           REDIS_HOST: localhost
           REDIS_PORT: 6379
-        run: pytest -q
+        run: PYTHONPATH=. pytest -q
 
   docker:
     runs-on: ubuntu-latest
