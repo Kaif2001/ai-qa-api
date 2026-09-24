@@ -1,9 +1,10 @@
 import os
+import time
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Form, HTTPException
 from google.genai import errors
-from prometheus_client import Counter, generate_latest
+from prometheus_client import Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -31,6 +32,11 @@ chat_requests = Counter(
 chat_errors = Counter(
     "chat_errors_total",
     "Total number of chat errors",
+)
+
+chat_latency = Histogram(
+    "chat_request_duration_seconds",
+    "Chat request latency in seconds",
 )
 
 
@@ -91,6 +97,7 @@ def chat(
     current_user: str = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    start_time = time.perf_counter()
     chat_requests.inc()
 
     rate_limit_key = f"chat_rate:{current_user}"
@@ -102,6 +109,7 @@ def chat(
 
     if request_count > 10:
         chat_errors.inc()
+        chat_latency.observe(time.perf_counter() - start_time)
 
         raise HTTPException(
             status_code=429,
@@ -113,6 +121,7 @@ def chat(
 
     except errors.RateLimitError:
         chat_errors.inc()
+        chat_latency.observe(time.perf_counter() - start_time)
 
         raise HTTPException(
             status_code=429,
@@ -121,6 +130,7 @@ def chat(
 
     except Exception:
         chat_errors.inc()
+        chat_latency.observe(time.perf_counter() - start_time)
 
         raise HTTPException(
             status_code=503,
@@ -136,6 +146,8 @@ def chat(
     db.add(chat_history)
     db.commit()
     db.refresh(chat_history)
+
+    chat_latency.observe(time.perf_counter() - start_time)
 
     return {
         "user": current_user,
