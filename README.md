@@ -86,8 +86,11 @@ ai-qa-api/
 ├── MIGRATION.md
 ├── SCALING.md
 └── SECURITY.md
+
 API Endpoints
+
 Login
+
 POST /auth/login
 
 Form data:
